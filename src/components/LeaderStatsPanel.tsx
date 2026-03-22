@@ -74,7 +74,7 @@ export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
                   ? "bg-spice/20 text-spice border border-spice/40"
                   : disabled
                   ? "text-sand-dark/30 border border-white/5 cursor-not-allowed"
-                  : "text-sand-dark hover:text-sand border border-white/10"
+                  : "glass-morphism text-sand hover:text-spice border border-sand-dark/40 hover:border-spice/40"
               }`}
             >
               <Icon size={13} />
@@ -92,7 +92,7 @@ export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
             className={`px-3 py-1 text-xs uppercase tracking-widest rounded-sm transition-all ${
               effectiveRound === null
                 ? "bg-spice/20 text-spice border border-spice/40"
-                : "text-sand-dark hover:text-sand border border-white/10"
+                : "glass-morphism text-sand hover:text-spice border border-sand-dark/40 hover:border-spice/40"
             }`}
           >
             All Rounds
@@ -104,7 +104,7 @@ export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
               className={`px-3 py-1 text-xs uppercase tracking-widest rounded-sm transition-all ${
                 effectiveRound === r.number
                   ? "bg-spice/20 text-spice border border-spice/40"
-                  : "text-sand-dark hover:text-sand border border-white/10"
+                  : "glass-morphism text-sand hover:text-spice border border-sand-dark/40 hover:border-spice/40"
               }`}
             >
               R{r.number}

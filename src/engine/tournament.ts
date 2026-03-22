@@ -551,6 +551,45 @@ export function getStandings(players: Player[], rounds: Round[] = []): Player[] 
   });
 }
 
+/**
+ * Reconstruct standings as they were after a specific round number.
+ * Rebuilds player stats from scratch using only rounds up to `upToRound`.
+ */
+export function getStandingsAsOfRound(
+  players: Player[],
+  rounds: Round[],
+  upToRound: number
+): Player[] {
+  const filteredRounds = rounds.filter((r) => r.isComplete && r.number <= upToRound);
+
+  // Build synthetic player objects with stats accumulated only from the filtered rounds
+  const statsMap = new Map<string, { points: number; wins: number; totalVP: number; efficiency: number }>();
+  for (const p of players) {
+    statsMap.set(p.id, { points: 0, wins: 0, totalVP: 0, efficiency: 0 });
+  }
+
+  for (const round of filteredRounds) {
+    for (const table of round.tables) {
+      if (!table.isComplete) continue;
+      for (const result of table.results) {
+        const stat = statsMap.get(result.playerId);
+        if (!stat) continue;
+        stat.points += POINTS[result.position] || 0;
+        stat.totalVP += result.vp;
+        stat.efficiency += result.position;
+        if (result.position === 1) stat.wins++;
+      }
+    }
+  }
+
+  const syntheticPlayers: Player[] = players.map((p) => {
+    const stat = statsMap.get(p.id)!;
+    return { ...p, ...stat };
+  });
+
+  return getStandings(syntheticPlayers, filteredRounds);
+}
+
 export function getTop8(state: TournamentState): Player[] {
   return getStandings(state.players, state.rounds).slice(0, state.settings.topCut);
 }
