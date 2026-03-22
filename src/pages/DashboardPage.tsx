@@ -4,11 +4,12 @@ import { TableCard } from "../components/TableCard";
 import { DramaticReveal } from "../components/DramaticReveal";
 import { Leaderboard } from "../components/Leaderboard";
 import { LeaderStatsPanel } from "../components/LeaderStatsPanel";
+import { RoundHistory } from "../components/RoundHistory";
 import { LeaderReveal } from "../components/animations/LeaderReveal";
 import type { TournamentState, TableResult } from "../engine/types";
 import { getLeaderInfo, getLeaderImageUrl } from "../engine/types";
 import { generateRandomTableResults } from "../engine/testUtils";
-import { Trophy, Swords, BarChart3, Crown, Eye, FlaskConical } from "lucide-react";
+import { Trophy, Swords, BarChart3, Crown, Eye, FlaskConical, History } from "lucide-react";
 
 interface DashboardPageProps {
   state: TournamentState;
@@ -20,7 +21,7 @@ interface DashboardPageProps {
   testMode: boolean;
 }
 
-type TabView = "tables" | "standings" | "leaders";
+type TabView = "tables" | "standings" | "leaders" | "history";
 
 export function DashboardPage({
   state,
@@ -171,6 +172,19 @@ export function DashboardPage({
           <Crown size={16} />
           Leaders
         </button>
+        {state.rounds.filter((r) => r.isComplete).length > 1 && (
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`flex items-center gap-2 px-4 py-2 text-sm uppercase tracking-widest transition-all ${
+              activeTab === "history"
+                ? "text-spice border-b-2 border-spice"
+                : "text-sand-dark hover:text-sand"
+            }`}
+          >
+            <History size={16} />
+            History
+          </button>
+        )}
       </div>
 
       {/* Round Leaders button */}
@@ -361,6 +375,15 @@ export function DashboardPage({
           animate={{ opacity: 1, y: 0 }}
         >
           <LeaderStatsPanel rounds={state.rounds} />
+        </motion.div>
+      )}
+
+      {activeTab === "history" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <RoundHistory rounds={state.rounds} players={state.players} />
         </motion.div>
       )}
 

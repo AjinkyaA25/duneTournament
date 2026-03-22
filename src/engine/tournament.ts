@@ -1,5 +1,5 @@
 import type { Player, Table, Round, TournamentState } from "./types";
-import type { LeaderStat, LeaderTier, LeaderInfo } from "./types";
+import type { LeaderStat, LeaderTier, LeaderInfo, StatsPhase } from "./types";
 import { LEADER_LIST, getLeaderInfo, getLeadersByTier } from "./types";
 
 // ===== PLAYER MANAGEMENT =====
@@ -737,6 +737,33 @@ export function getLeaderStats(
   });
 
   return leaderStats;
+}
+
+const BRACKET_TYPES = new Set(["semifinal", "winners-final", "losers-final", "grand-final"]);
+
+/**
+ * Compute leader stats filtered by tournament phase.
+ * "all" = every completed round, "qualifying" = group stage only,
+ * "bracket" = elimination rounds only (semifinal through grand-final).
+ */
+export function getLeaderStatsByPhase(
+  rounds: Round[],
+  phase: StatsPhase,
+  singleRound?: number
+): LeaderStat[] {
+  let filtered = rounds;
+
+  if (phase === "qualifying") {
+    filtered = rounds.filter((r) => r.type === "qualifying");
+  } else if (phase === "bracket") {
+    filtered = rounds.filter((r) => BRACKET_TYPES.has(r.type));
+  }
+
+  if (singleRound !== undefined) {
+    return getLeaderStats(filtered, singleRound, singleRound);
+  }
+
+  return getLeaderStats(filtered);
 }
 
 // ===== LEADER TIER SELECTION =====

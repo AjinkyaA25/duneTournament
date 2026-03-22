@@ -24,6 +24,8 @@ export interface Table {
   isComplete: boolean;
 }
 
+export type StatsPhase = "all" | "qualifying" | "bracket";
+
 export interface Round {
   number: number;
   tables: Table[];

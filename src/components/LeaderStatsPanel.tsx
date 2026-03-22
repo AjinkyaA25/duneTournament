@@ -1,7 +1,8 @@
 import { motion } from "motion/react";
 import { useState } from "react";
-import type { Round, LeaderTier } from "../engine/types";
-import { getLeaderStats } from "../engine/tournament";
+import type { Round, LeaderTier, StatsPhase } from "../engine/types";
+import { getLeaderStatsByPhase } from "../engine/tournament";
+import { Layers, Swords, Trophy } from "lucide-react";
 
 interface LeaderStatsPanelProps {
   rounds: Round[];
@@ -14,19 +15,36 @@ const TIER_STYLES: Record<LeaderTier, { label: string; color: string }> = {
   none: { label: "—", color: "bg-white/5 text-sand-dark border-white/10" },
 };
 
-export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
-  const completedRounds = rounds.filter((r) => r.isComplete);
-  const maxRound = completedRounds.length;
+const PHASE_OPTIONS: { key: StatsPhase; label: string; icon: typeof Layers }[] = [
+  { key: "all", label: "Overall", icon: Layers },
+  { key: "qualifying", label: "Groups", icon: Swords },
+  { key: "bracket", label: "Bracket", icon: Trophy },
+];
 
+const BRACKET_TYPES = new Set(["semifinal", "winners-final", "losers-final", "grand-final"]);
+
+export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
+  const [phase, setPhase] = useState<StatsPhase>("all");
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
 
-  // null = cumulative (all rounds), number = specific round
-  const stats =
-    selectedRound === null
-      ? getLeaderStats(rounds)
-      : getLeaderStats(rounds, selectedRound, selectedRound);
+  // Filter completed rounds visible for the current phase
+  const phaseRounds = rounds.filter((r) => {
+    if (!r.isComplete) return false;
+    if (phase === "qualifying") return r.type === "qualifying";
+    if (phase === "bracket") return BRACKET_TYPES.has(r.type);
+    return true;
+  });
 
-  if (stats.length === 0) {
+  const hasQualifying = rounds.some((r) => r.isComplete && r.type === "qualifying");
+  const hasBracket = rounds.some((r) => r.isComplete && BRACKET_TYPES.has(r.type));
+
+  // Reset round selection when phase changes and round is out of scope
+  const validRoundNums = new Set(phaseRounds.map((r) => r.number));
+  const effectiveRound = selectedRound !== null && validRoundNums.has(selectedRound) ? selectedRound : null;
+
+  const stats = getLeaderStatsByPhase(rounds, phase, effectiveRound ?? undefined);
+
+  if (stats.length === 0 && phaseRounds.length === 0) {
     return (
       <div className="text-center py-12 text-sand-dark text-sm uppercase tracking-widest">
         No leader data recorded yet.
@@ -40,45 +58,71 @@ export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
 
   return (
     <div className="space-y-4">
-      {/* Round filter */}
-      <div className="flex items-center justify-center gap-2 flex-wrap">
-        <button
-          onClick={() => setSelectedRound(null)}
-          className={`px-3 py-1 text-xs uppercase tracking-widest rounded-sm transition-all ${
-            selectedRound === null
-              ? "bg-spice/20 text-spice border border-spice/40"
-              : "text-sand-dark hover:text-sand border border-white/10"
-          }`}
-        >
-          All Rounds
-        </button>
-        {Array.from({ length: maxRound }, (_, i) => {
-          const roundNum = completedRounds[i].number;
+      {/* Phase filter */}
+      <div className="flex items-center justify-center gap-3">
+        {PHASE_OPTIONS.map(({ key, label, icon: Icon }) => {
+          const disabled =
+            (key === "qualifying" && !hasQualifying) ||
+            (key === "bracket" && !hasBracket);
           return (
             <button
-              key={roundNum}
-              onClick={() => setSelectedRound(roundNum)}
-              className={`px-3 py-1 text-xs uppercase tracking-widest rounded-sm transition-all ${
-                selectedRound === roundNum
+              key={key}
+              onClick={() => { setPhase(key); setSelectedRound(null); }}
+              disabled={disabled}
+              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs uppercase tracking-widest rounded-sm transition-all ${
+                phase === key
                   ? "bg-spice/20 text-spice border border-spice/40"
+                  : disabled
+                  ? "text-sand-dark/30 border border-white/5 cursor-not-allowed"
                   : "text-sand-dark hover:text-sand border border-white/10"
               }`}
             >
-              R{roundNum}
+              <Icon size={13} />
+              {label}
             </button>
           );
         })}
       </div>
 
+      {/* Round filter */}
+      {phaseRounds.length > 1 && (
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <button
+            onClick={() => setSelectedRound(null)}
+            className={`px-3 py-1 text-xs uppercase tracking-widest rounded-sm transition-all ${
+              effectiveRound === null
+                ? "bg-spice/20 text-spice border border-spice/40"
+                : "text-sand-dark hover:text-sand border border-white/10"
+            }`}
+          >
+            All Rounds
+          </button>
+          {phaseRounds.map((r) => (
+            <button
+              key={r.number}
+              onClick={() => setSelectedRound(r.number)}
+              className={`px-3 py-1 text-xs uppercase tracking-widest rounded-sm transition-all ${
+                effectiveRound === r.number
+                  ? "bg-spice/20 text-spice border border-spice/40"
+                  : "text-sand-dark hover:text-sand border border-white/10"
+              }`}
+            >
+              R{r.number}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Stats table */}
       <div className="overflow-x-auto">
         {/* Header */}
-        <div className="grid grid-cols-[2rem_1fr_3.5rem_3.5rem_4rem_5rem] gap-2 px-4 py-2 text-xs uppercase tracking-[0.15em] opacity-50 min-w-[400px]">
+        <div className="grid grid-cols-[2rem_1fr_3.5rem_3.5rem_4rem_3.5rem_5rem] gap-2 px-4 py-2 text-xs uppercase tracking-[0.15em] opacity-50 min-w-[480px]">
           <span>T</span>
           <span>Leader</span>
           <span className="text-center">Plays</span>
           <span className="text-center">Wins</span>
           <span className="text-right">Avg VP</span>
+          <span className="text-right">Avg P</span>
           <span className="text-right">Win Rate</span>
         </div>
 
@@ -91,7 +135,7 @@ export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.03 }}
-              className="grid grid-cols-[2rem_1fr_3.5rem_3.5rem_4rem_5rem] gap-2 px-4 py-3 rounded-sm glass-morphism mb-1 min-w-[400px]"
+              className="grid grid-cols-[2rem_1fr_3.5rem_3.5rem_4rem_3.5rem_5rem] gap-2 px-4 py-3 rounded-sm glass-morphism mb-1 min-w-[480px]"
             >
               {/* Tier badge */}
               <span
@@ -112,6 +156,9 @@ export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
               </span>
               <span className="text-score text-sm text-right opacity-70 self-center">
                 {stat.plays > 0 ? (stat.totalVP / stat.plays).toFixed(1) : "—"}
+              </span>
+              <span className="text-score text-sm text-right opacity-70 self-center" title="Average finishing position (lower is better)">
+                {stat.avgPosition > 0 ? stat.avgPosition.toFixed(1) : "—"}
               </span>
               <span
                 className={`text-score text-sm text-right font-bold self-center ${
@@ -152,7 +199,8 @@ export function LeaderStatsPanel({ rounds }: LeaderStatsPanelProps) {
       <div className="text-center text-xs text-sand-dark opacity-50 uppercase tracking-widest pt-1">
         {stats.length} leaders tracked &middot;{" "}
         {stats.reduce((s, l) => s + l.plays, 0)} total plays
-        {selectedRound !== null && ` · Round ${selectedRound}`}
+        {" "}&middot; {stats.reduce((s, l) => s + l.totalVP, 0)} total VP
+        {effectiveRound !== null && ` · Round ${effectiveRound}`}
       </div>
     </div>
   );

@@ -3,11 +3,13 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { TableCard } from "../components/TableCard";
 import { DramaticReveal } from "../components/DramaticReveal";
 import { Leaderboard } from "../components/Leaderboard";
+import { LeaderStatsPanel } from "../components/LeaderStatsPanel";
+import { RoundHistory } from "../components/RoundHistory";
 import { LeaderReveal } from "../components/animations/LeaderReveal";
 import type { TournamentState, TableResult } from "../engine/types";
 import { getTop8, getFinalStandings } from "../engine/tournament";
 import { generateRandomTableResults } from "../engine/testUtils";
-import { Trophy, Crown, Swords, ChevronRight, BarChart3, FlaskConical } from "lucide-react";
+import { Trophy, Crown, Swords, ChevronRight, BarChart3, FlaskConical, History } from "lucide-react";
 
 const ELITE_TABLE_LABELS = ["Elite Table A", "Elite Table B"];
 const CHALLENGER_TABLE_LABELS = ["Challenger Table C", "Challenger Table D"];
@@ -33,6 +35,8 @@ export function Top8Page({
   testMode,
 }: Top8PageProps) {
   const [showStandings, setShowStandings] = useState(false);
+  const [showLeaders, setShowLeaders] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [showLeaderReveal, setShowLeaderReveal] = useState(false);
   const [leaderRevealDone, setLeaderRevealDone] = useState(false);
   const lastRevealedRound = useRef<number>(0);
@@ -395,19 +399,53 @@ export function Top8Page({
       {/* Round History */}
       {top8Rounds.length > 0 && (
         <div className="mt-8">
-          <button
-            onClick={() => setShowStandings(!showStandings)}
-            className="flex items-center gap-2 text-sm text-sand-dark hover:text-sand uppercase tracking-widest mb-4 mx-auto"
-          >
-            <BarChart3 size={14} />
-            {showStandings ? "Hide" : "Show"} Full Standings
-          </button>
+          <div className="flex justify-center gap-6 mb-4">
+            <button
+              onClick={() => setShowStandings(!showStandings)}
+              className="flex items-center gap-2 text-sm text-sand-dark hover:text-sand uppercase tracking-widest"
+            >
+              <BarChart3 size={14} />
+              {showStandings ? "Hide" : "Show"} Standings
+            </button>
+            <button
+              onClick={() => setShowLeaders(!showLeaders)}
+              className="flex items-center gap-2 text-sm text-sand-dark hover:text-sand uppercase tracking-widest"
+            >
+              <Crown size={14} />
+              {showLeaders ? "Hide" : "Show"} Leaders
+            </button>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center gap-2 text-sm text-sand-dark hover:text-sand uppercase tracking-widest"
+            >
+              <History size={14} />
+              {showHistory ? "Hide" : "Show"} History
+            </button>
+          </div>
           {showStandings && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
             >
               <Leaderboard players={state.players} highlightTop={16} finalStandings={finalStandings} rounds={state.rounds} />
+            </motion.div>
+          )}
+          {showLeaders && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-4"
+            >
+              <LeaderStatsPanel rounds={state.rounds} />
+            </motion.div>
+          )}
+          {showHistory && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-4"
+            >
+              <RoundHistory rounds={state.rounds} players={state.players} />
             </motion.div>
           )}
         </div>
