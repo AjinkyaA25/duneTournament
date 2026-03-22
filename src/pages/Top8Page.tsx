@@ -34,9 +34,7 @@ export function Top8Page({
   dramaticReveal,
   testMode,
 }: Top8PageProps) {
-  const [showStandings, setShowStandings] = useState(false);
-  const [showLeaders, setShowLeaders] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [activePanel, setActivePanel] = useState<"standings" | "leaders" | "history" | null>(null);
   const [showLeaderReveal, setShowLeaderReveal] = useState(false);
   const [leaderRevealDone, setLeaderRevealDone] = useState(false);
   const lastRevealedRound = useRef<number>(0);
@@ -401,28 +399,34 @@ export function Top8Page({
         <div className="mt-8">
           <div className="flex justify-center gap-6 mb-4">
             <button
-              onClick={() => setShowStandings(!showStandings)}
-              className="flex items-center gap-2 text-sm text-sand-dark hover:text-sand uppercase tracking-widest"
+              onClick={() => setActivePanel(activePanel === "standings" ? null : "standings")}
+              className={`flex items-center gap-2 text-sm uppercase tracking-widest ${
+                activePanel === "standings" ? "text-spice" : "text-sand-dark hover:text-sand"
+              }`}
             >
               <BarChart3 size={14} />
-              {showStandings ? "Hide" : "Show"} Standings
+              {activePanel === "standings" ? "Hide" : "Show"} Standings
             </button>
             <button
-              onClick={() => setShowLeaders(!showLeaders)}
-              className="flex items-center gap-2 text-sm text-sand-dark hover:text-sand uppercase tracking-widest"
+              onClick={() => setActivePanel(activePanel === "leaders" ? null : "leaders")}
+              className={`flex items-center gap-2 text-sm uppercase tracking-widest ${
+                activePanel === "leaders" ? "text-spice" : "text-sand-dark hover:text-sand"
+              }`}
             >
               <Crown size={14} />
-              {showLeaders ? "Hide" : "Show"} Leaders
+              {activePanel === "leaders" ? "Hide" : "Show"} Leaders
             </button>
             <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="flex items-center gap-2 text-sm text-sand-dark hover:text-sand uppercase tracking-widest"
+              onClick={() => setActivePanel(activePanel === "history" ? null : "history")}
+              className={`flex items-center gap-2 text-sm uppercase tracking-widest ${
+                activePanel === "history" ? "text-spice" : "text-sand-dark hover:text-sand"
+              }`}
             >
               <History size={14} />
-              {showHistory ? "Hide" : "Show"} History
+              {activePanel === "history" ? "Hide" : "Show"} History
             </button>
           </div>
-          {showStandings && (
+          {activePanel === "standings" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -430,7 +434,7 @@ export function Top8Page({
               <Leaderboard players={state.players} highlightTop={16} finalStandings={finalStandings} rounds={state.rounds} />
             </motion.div>
           )}
-          {showLeaders && (
+          {activePanel === "leaders" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -439,7 +443,7 @@ export function Top8Page({
               <LeaderStatsPanel rounds={state.rounds} />
             </motion.div>
           )}
-          {showHistory && (
+          {activePanel === "history" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}

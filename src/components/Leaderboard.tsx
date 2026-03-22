@@ -38,14 +38,6 @@ export function Leaderboard({ players, highlightTop = 0, finalStandings, rounds 
       const prevStandings = getStandingsAsOfRound(players, rounds, prevRound.number);
       prevStandings.forEach((p, i) => prevRoundPositionMap.set(p.id, i + 1));
     }
-  } else if (completedRounds.length >= 2) {
-    // "All" mode: compare current standings vs standings before the last completed round
-    const sortedCompleted = [...completedRounds].sort((a, b) => b.number - a.number);
-    const prevRound = sortedCompleted[1]; // second-to-last completed round
-    if (prevRound) {
-      const prevStandings = getStandingsAsOfRound(players, rounds, prevRound.number);
-      prevStandings.forEach((p, i) => prevRoundPositionMap.set(p.id, i + 1));
-    }
   }
 
   const hasPrevData = prevRoundPositionMap.size > 0;
