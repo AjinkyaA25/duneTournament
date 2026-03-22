@@ -116,10 +116,10 @@ export function DramaticReveal({
           <div className="text-center">
             <p className="text-xs text-sand-dark uppercase tracking-[0.3em] mb-2">
               {revealedCount === 0
-                ? "Tables are ready"
+                ? items.length === 1 ? "Table is ready" : "Tables are ready"
                 : `${revealedCount} of ${items.length} revealed`}
             </p>
-            {labels?.[currentIndex] && (
+            {items.length > 1 && labels?.[currentIndex] && (
               <motion.p
                 key={`label-${currentIndex}`}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -140,12 +140,14 @@ export function DramaticReveal({
             className="btn-imperial-filled py-4 px-10 text-lg flex items-center gap-3 disabled:opacity-50"
           >
             <Eye size={22} />
-            {revealedCount === 0 ? "Reveal First Table" : "Reveal Next Table"}
+            {items.length === 1
+              ? "Reveal Table"
+              : revealedCount === 0 ? "Reveal First Table" : "Reveal Next Table"}
             <ChevronRight size={18} />
           </motion.button>
 
           {/* Skip button */}
-          {revealedCount > 0 && (
+          {revealedCount > 0 && items.length > 1 && (
             <button
               onClick={revealAll}
               className="text-xs text-sand-dark hover:text-sand uppercase tracking-widest transition-colors"
