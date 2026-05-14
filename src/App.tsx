@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTournamentState } from "./hooks/useTournamentState";
 import { RegistrationPage } from "./pages/RegistrationPage";
-import { GroupDrawPage } from "./pages/GroupDrawPage";
+import { SpinnerWheelPage } from "./pages/SpinnerWheelPage";
 import { KnockoutRandomizer } from "./pages/KnockoutRandomizer";
 import { DashboardPage } from "./pages/DashboardPage";
 import { Top8Page } from "./pages/Top8Page";
@@ -36,7 +36,7 @@ function App() {
     addPlayer,
     removePlayer,
     startTournament,
-    proceedToQualifying,
+    setGroupAssignments,
     submitTableResults,
     batchSubmitTableResults,
     startTop8,
@@ -88,12 +88,6 @@ function App() {
       startTournament();
     });
   }, [transitionTo, startTournament]);
-
-  const handleProceedToQualifying = useCallback(() => {
-    transitionTo(() => {
-      proceedToQualifying();
-    });
-  }, [transitionTo, proceedToQualifying]);
 
   const handleStartTop8 = useCallback(() => {
     transitionTo(() => {
@@ -211,9 +205,11 @@ function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <GroupDrawPage
+            <SpinnerWheelPage
               players={state.players}
-              onProceed={handleProceedToQualifying}
+              onConfirm={(assignments) => {
+                transitionTo(() => setGroupAssignments(assignments));
+              }}
             />
           </motion.div>
         )}

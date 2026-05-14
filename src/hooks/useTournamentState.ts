@@ -29,6 +29,7 @@ type Action =
   | { type: "SET_TOURNAMENT_NAME"; name: string }
   | { type: "START_TOURNAMENT" }
   | { type: "PROCEED_TO_QUALIFYING" }
+  | { type: "SET_GROUP_ASSIGNMENTS"; assignments: Map<string, number> }
   | { type: "GENERATE_ROUND" }
   | { type: "SUBMIT_TABLE_RESULTS"; roundIndex: number; tableId: number; results: TableResult[] }
   | { type: "BATCH_SUBMIT_TABLE_RESULTS"; roundIndex: number; tables: { tableId: number; results: TableResult[] }[] }
@@ -78,6 +79,32 @@ function tournamentReducer(state: TournamentState, action: Action): TournamentSt
         phase: "group-draw",
         currentRound: 0,
       };
+    }
+
+    case "SET_GROUP_ASSIGNMENTS": {
+      // Apply manual group assignments from spinner wheel
+      const updatedPlayers = state.players.map((p) => ({
+        ...p,
+        groupId: action.assignments.get(p.id) ?? p.groupId ?? 0,
+      }));
+      // Generate all 4 rounds with the new assignments
+      let newState = { ...state, players: updatedPlayers, phase: "qualifying" as const };
+      for (let i = 0; i < state.settings.totalQualifyingRounds; i++) {
+        const tables = generateSwissPairing({ ...newState, currentRound: i });
+        const roundNumber = i + 1;
+        const tier = getTierForRound(roundNumber, false);
+        const leaders = selectRoundLeaders(tier);
+        const newRound: Round = {
+          number: roundNumber,
+          tables,
+          isComplete: false,
+          type: "qualifying",
+          availableLeaders: leaders.map((l) => l.name),
+          leaderTier: tier,
+        };
+        newState = { ...newState, rounds: [...newState.rounds, newRound], currentRound: roundNumber };
+      }
+      return newState;
     }
 
     case "PROCEED_TO_QUALIFYING": {
@@ -388,6 +415,10 @@ export function useTournamentState() {
     dispatch({ type: "PROCEED_TO_QUALIFYING" });
   }, []);
 
+  const setGroupAssignments = useCallback((assignments: Map<string, number>) => {
+    dispatch({ type: "SET_GROUP_ASSIGNMENTS", assignments });
+  }, []);
+
   const generateRound = useCallback(() => {
     dispatch({ type: "GENERATE_ROUND" });
   }, []);
@@ -511,6 +542,7 @@ export function useTournamentState() {
     setTournamentName,
     startTournament,
     proceedToQualifying,
+    setGroupAssignments,
     generateRound,
     submitTableResults,
     batchSubmitTableResults,
